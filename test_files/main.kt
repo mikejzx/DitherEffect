@@ -13,7 +13,7 @@ fun main(args: Array<String>) {
 }
 
 class Main {
-    private val palette: Array<Color> = arrayOf(
+    /*private val palette: Array<Color> = emptyArray<T>(); = arrayOf(
         Color.rgb(  0,   0,   0), // Black
         Color.rgb(  0,   0, 255), // Green
         Color.rgb(  0, 255,   0), // Blue
@@ -22,7 +22,9 @@ class Main {
         Color.rgb(255,   0, 255), // Purple
         Color.rgb(255, 255,   0), // Yellow
         Color.rgb(255, 255, 255) // White
-    );
+    );*/
+
+    private val palette = ArrayList<Color>();
 
     public fun run() {
         println("Hello, world");
@@ -31,7 +33,22 @@ class Main {
         //    println("Usage: <image_original_new> <image_new_path>");
         //    return; 
         //}
-        var img : BufferedImage = ImageIO.read(File("res/lenna.png")); // args[0]
+
+        /*
+        for (r in 0..256 step 16) {
+            for (g in 0..256 step 16) {
+                for (b in 0..256 step 16) {
+                    palette.add(Color.rgb(
+                        clamp(r, 0, 255), 
+                        clamp(g, 0, 255), 
+                        clamp(b, 0, 255)
+                    ));
+                }
+            }
+        }
+        */
+
+        var img : BufferedImage = ImageIO.read(File("res/bands.png")); // args[0]
         val w = img.width.toInt();
         val h = img.height.toInt();
         compute(SwingFXUtils.toFXImage(img, null), w, h);
@@ -51,8 +68,8 @@ class Main {
         // Iterate through pixels, set them to colour / 2
         for (y in 0 until h) {
             for (x in 0 until w) {
-                val oldPixel: Color? = d.get(x, y);
-                val newPixel = findClosestPaletteColour(oldPixel!!);
+                val oldPixel: Color = d.get(x, y)!!;
+                val newPixel = findClosestPaletteColour(oldPixel);
                 pWriter.setColor(x, y, newPixel);
                 val quantErr = colourSub(oldPixel, newPixel);
                 if (x + 1 < w) { 
@@ -71,6 +88,7 @@ class Main {
                     val v = colAdd(pReader.getColor(x + 1, y + 1), colMul(quantErr, 1.0f / 16.0f));
                     pWriter.setColor(x + 1, y + 1, clampColour(v));
                 }
+
 
                 //val c = pReader.getColor(x, y);
                 //pWriter.setColor(x, y, c.desaturate());
@@ -119,9 +137,9 @@ class Main {
 
     private fun colMul(a: Color, x: Float) : Color {
         return Color.rgb(
-            clamp((a.getRed() * x * 255).toInt(), 0, 255),
-            clamp((a.getGreen() * x * 255).toInt(), 0, 255),
-            clamp((a.getBlue() * x * 255).toInt(), 0, 255)
+            clamp((a.getRed() * x * 255.0).toInt(), 0, 255),
+            clamp((a.getGreen() * x * 255.0).toInt(), 0, 255),
+            clamp((a.getBlue() * x * 255.0).toInt(), 0, 255)
         );
     }
     
