@@ -46,9 +46,9 @@ class Colour(val x: Color) {
     companion object {
         public fun subtract(ac: Colour, bc: Colour): Colour {
             return Colour(Color.rgb(
-                 Math.abs(ac.r - bc.r),
-                 Math.abs(ac.g - bc.g),
-                 Math.abs(ac.b - bc.b)
+                Utils.clamp(ac.r - bc.r, 0, 255),
+                Utils.clamp(ac.g - bc.g, 0, 255),
+                Utils.clamp(ac.b - bc.b, 0, 255)
             ));
         } 
     }
@@ -122,44 +122,42 @@ class MainClass {
 
         for (y in 1 until (h - 1)) {
             for (x in 1 until (w - 1)) {
-                val oldpixel: Colour = d[x][y]!!;//.grey();
+                val oldpixel: Colour = Colour(pReader.getColor(x, y)).grey(); //d[x][y]!!;//.grey();
                 val newpixel: Colour = findClosestPaletteColour(oldpixel);
                 val quantErr: Colour = Colour.subtract(oldpixel, newpixel);
-                pWriter.setColor(x, y, quantErr.build());
+                pWriter.setColor(x, y, oldpixel.build());
 
-                /*
                 val p0 = pReader.getColor(x + 1, y);
                 val p0c = Color.rgb(
-                    ((p0.getRed().toFloat() * 255.0f) + (quantErr.r.toFloat() * 255.0f * (7.0f / 16.0f))).toInt(),
-                    ((p0.getGreen().toFloat() * 255.0f) + (quantErr.g.toFloat() * 255.0f * (7.0f / 16.0f))).toInt(),
-                    ((p0.getBlue().toFloat() * 255.0f) + (quantErr.b.toFloat() * 255.0f * (7.0f / 16.0f))).toInt()
+                    Utils.clamp(((p0.getRed().toFloat() * 255.0f) + (quantErr.r.toFloat() * 255.0f * (7.0f / 16.0f))).toInt(), 0, 255),
+                    Utils.clamp(((p0.getGreen().toFloat() * 255.0f) + (quantErr.g.toFloat() * 255.0f * (7.0f / 16.0f))).toInt(), 0, 255),
+                    Utils.clamp(((p0.getBlue().toFloat() * 255.0f) + (quantErr.b.toFloat() * 255.0f * (7.0f / 16.0f))).toInt(), 0, 255)
                 );
                 pWriter.setColor(x + 1, y, p0c)
 
                 val p1 = pReader.getColor(x - 1, y + 1);
                 val p1c = Color.rgb(
-                    ((p1.getRed().toFloat() * 255.0f) + (quantErr.r.toFloat() * 255.0f * (3.0f / 16.0f))).toInt(),
-                    ((p1.getGreen().toFloat() * 255.0f) + (quantErr.g.toFloat() * 255.0f * (3.0f / 16.0f))).toInt(),
-                    ((p1.getBlue().toFloat() * 255.0f) + (quantErr.b.toFloat() * 255.0f * (3.0f / 16.0f))).toInt()
+                    Utils.clamp(((p1.getRed().toFloat() * 255.0f) + (quantErr.r.toFloat() * 255.0f * (3.0f / 16.0f))).toInt(), 0, 255),
+                    Utils.clamp(((p1.getGreen().toFloat() * 255.0f) + (quantErr.g.toFloat() * 255.0f * (3.0f / 16.0f))).toInt(), 0, 255),
+                    Utils.clamp(((p1.getBlue().toFloat() * 255.0f) + (quantErr.b.toFloat() * 255.0f * (3.0f / 16.0f))).toInt(), 0, 255)
                 );
                 pWriter.setColor(x - 1, y + 1, p1c)
 
                 val p2 = pReader.getColor(x, y + 1);
                 val p2c = Color.rgb(
-                    ((p2.getRed().toFloat() * 255.0f) + (quantErr.r.toFloat() * 255.0f * (5.0f / 16.0f))).toInt(),
-                    ((p2.getGreen().toFloat() * 255.0f) + (quantErr.g.toFloat() * 255.0f * (5.0f / 16.0f))).toInt(),
-                    ((p2.getBlue().toFloat() * 255.0f) + (quantErr.b.toFloat() * 255.0f * (5.0f / 16.0f))).toInt()
+                    Utils.clamp(((p2.getRed().toFloat() * 255.0f) + (quantErr.r.toFloat() * 255.0f * (5.0f / 16.0f))).toInt(), 0, 255),
+                    Utils.clamp(((p2.getGreen().toFloat() * 255.0f) + (quantErr.g.toFloat() * 255.0f * (5.0f / 16.0f))).toInt(), 0, 255),
+                    Utils.clamp(((p2.getBlue().toFloat() * 255.0f) + (quantErr.b.toFloat() * 255.0f * (5.0f / 16.0f))).toInt(), 0, 255)
                 );
                 pWriter.setColor(x, y + 1, p2c)
 
                 val p3 = pReader.getColor(x + 1, y + 1);
                 val p3c = Color.rgb(
-                    ((p3.getRed().toFloat() * 255.0f) + (quantErr.r.toFloat() * 255.0f * (3.0f / 16.0f))).toInt(),
-                    ((p3.getGreen().toFloat() * 255.0f) + (quantErr.g.toFloat() * 255.0f * (3.0f / 16.0f))).toInt(),
-                    ((p3.getBlue().toFloat() * 255.0f) + (quantErr.b.toFloat() * 255.0f * (3.0f / 16.0f))).toInt()
+                    Utils.clamp(((p3.getRed().toFloat() * 255.0f) + (quantErr.r.toFloat() * 255.0f * (3.0f / 16.0f))).toInt(), 0, 255),
+                    Utils.clamp(((p3.getGreen().toFloat() * 255.0f) + (quantErr.g.toFloat() * 255.0f * (3.0f / 16.0f))).toInt(), 0, 255),
+                    Utils.clamp(((p3.getBlue().toFloat() * 255.0f) + (quantErr.b.toFloat() * 255.0f * (3.0f / 16.0f))).toInt(), 0, 255)
                 );
                 pWriter.setColor(x + 1, y + 1, p3c)
-                */
             }
         }
         ImageIO.write(SwingFXUtils.fromFXImage(img, null), "png", File(pathOutput));
@@ -167,11 +165,10 @@ class MainClass {
 
     // Simple rounding palette.
     private fun findClosestPaletteColour(x: Colour): Colour {
-        val factor: Float = (255.0f / 4.0f);
-        x.r = (Math.round(x.r.toFloat() / factor).toInt()) * factor.toInt();
-        x.g = (Math.round(x.g.toFloat() / factor).toInt()) * factor.toInt();
-        x.b = (Math.round(x.b.toFloat() / factor).toInt()) * factor.toInt();
-        x.clamp();
-        return x;
+        val factor: Float = (255.0f / 1.0f);
+        val r = Utils.clamp((Math.round(x.r.toFloat() / factor).toInt()) * factor.toInt(), 0, 255);
+        val g = Utils.clamp((Math.round(x.g.toFloat() / factor).toInt()) * factor.toInt(), 0, 255);
+        val b = Utils.clamp((Math.round(x.b.toFloat() / factor).toInt()) * factor.toInt(), 0, 255);
+        return Colour(Color.rgb(r, g, b));
     }
 }
