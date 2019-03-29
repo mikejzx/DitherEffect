@@ -1,1 +1,0 @@
-# Dither effect

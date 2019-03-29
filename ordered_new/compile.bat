@@ -1,1 +1,0 @@
-kotlinc dither_ordered.kt -include-runtime -d dither_ordered.jar && java -jar dither_ordered.jar
