@@ -23,9 +23,9 @@ class MainClass {
     val pathInput: String = "../res/lenna.png";
     val pathOutput: String = "../res/result.png";
 
-    val R = 7; val G = 9; val B = 4; // 7*9*4 palette (252 colours)
-    val paletteGamma = 1.5f;
-    val ditherGamma = 2.0f / paletteGamma;
+    val R: Int = 7; val G: Int = 9; val B: Int = 4; // 7*9*4 palette (252 colours)
+    val paletteGamma: Double = 1.5;
+    val ditherGamma: Double = 2.0 / paletteGamma;
     var colourConvert = arrayOfNulls<Int>(3 * 256 * 256);
     var dither8x8 = arrayOfNulls<Int>(8 * 8);
     val ditherBits = 6; // Dither strength
@@ -45,8 +45,8 @@ class MainClass {
         var dtab: Array<Float?> = arrayOfNulls<Float>(256);
         var ptab: Array<Float?> = arrayOfNulls<Float>(256);
         for (n in 0 until 256) {
-            dtab[n] = ((255.0f/256.0f) - Math.pow(n.toFloat() / 256.0f, 1.0f / ditherGamma.toFloat())).toFloat();
-            ptab[n] = Math.pow(n.toFloat() / 255.0f, 1.0f / paletteGamma.toFloat()).toFloat();
+            dtab[n] = ((255.0f/256.0f) - Math.pow(n / 256.0, 1.0 / ditherGamma)).toFloat();
+            ptab[n] = Math.pow(n / 255.0, 1.0 / paletteGamma).toFloat();
         }
         for (n in 0 until 256) {
             for (d in 0 until 256) {
@@ -79,11 +79,17 @@ class MainClass {
                 val intG: Int = (col.getGreen() * 255).toInt();
                 val intB: Int = (col.getBlue() * 255).toInt();
 
+                val r0 = Math.pow((((intR/(B*G))%R) * 1.0 / (R-1)).toDouble(), paletteGamma).toInt() * 63;
+                val g0 = Math.pow((((intG/    B)%R) * 1.0 / (G-1)).toDouble(), paletteGamma).toInt() * 63;
+                val b0 = Math.pow((((intB      )%B) * 1.0 / (B-1)).toDouble(), paletteGamma).toInt() * 63;
+
                 // The 'and 0xFF' may not be required since the values wont ever pass 255 anyway.
-                var newR: Int = colourConvert[0 + ((intR * 256) and 0xFF) + d * 256]!!;
-                var newG: Int = colourConvert[1 + ((intG * 256) and 0xFF) + d * 256]!!;
-                var newB: Int = colourConvert[2 + ((intB * 256) and 0xFF) + d * 256]!!;
+                var newR: Int = colourConvert[0 + ((r0 * 256) and 0xFF) + d * 256]!!;
+                var newG: Int = colourConvert[1 + ((g0 * 256) and 0xFF) + d * 256]!!;
+                var newB: Int = colourConvert[2 + ((b0 * 256) and 0xFF) + d * 256]!!;
+                
                 val result = Color.rgb(newR, newG, newB);
+                
                 pWriter.setColor(x, y, result);
             }
         }
