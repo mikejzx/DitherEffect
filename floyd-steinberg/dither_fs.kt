@@ -1,10 +1,13 @@
 
-/* Ordered dithering algorithm */
-/* algorithms courtesy of Bisqwit */
+/* Floyd-Steinberg dithering algorithm */
+// As found on the wiki page
+// https://en.wikipedia.org/wiki/Floyd-Steinberg_dithering
 
 package io.mikejzx.github.ditheringtests;
 
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.embed.swing.SwingFXUtils;
 import javax.imageio.ImageIO;
@@ -20,44 +23,11 @@ public fun main(args: Array<String>) {
 
 class MainClass {
 
-    val pathInput: String = "../res/required_tests/random.png";
+    val pathInput: String = "../res/lenna.png";
     val pathOutput: String = "../res/result.png";
-
-    var pal = ArrayList<Int>();
-
-    val dither8x8 = ArrayList<Float>();
 
     public fun invoke() {
         println("Invoked");
-
-        for (y in 0 until 8) {
-            for (x in 0 until 8) {
-                val i = calcDitherThreshold((x and 7) + ((y and 7) shl 3));
-                dither8x8.add(i);
-            }
-        }
-
-        // Default RGB
-        /* 
-        for (r0 in 0 until 257 step 64) {
-            val r = clamp(r0, 0, 255);
-            for (g0 in 0 until 257 step 64) {
-                val g = clamp(g0, 0, 255);
-                for (b0 in 0 until 257 step 64) {
-                    val b = clamp(b0, 0, 255);
-                    val c: Int = ((r shl 16) + (g shl 8) + b) and 0xFFFFFF;
-                    palette.add(c);
-                }
-            }
-        }*/
-        // Greyscale
-        /*for (idx in 0 until 257 step 64) {
-            val i = clamp(idx, 0, 255);
-            val c: Int = ((i shl 16) + (i shl 8) + i) and 0xFFFFFF;
-            palette.add(c);
-        }*/
-
-        //for (i in palette) { println("Palette: R:" + ((i shr 16) and 0xFF) + " G:" + ((i shr 8) and 0xFF) + " B:" + (i and 0xFF));}
 
         val img: BufferedImage = ImageIO.read(File(pathInput));
         val w = img.width.toInt();
@@ -70,27 +40,43 @@ class MainClass {
         val pWriter = img.pixelWriter;
 
         val threshold = arrayOf(64, 64, 64); // 256/4
-        for (y in 0 until h) {
-            for (x in 0 until w) {
-                val factor = dither8x8[(x and 7) + ((y and 7) shl 3)];
-                val c = pReader.getColor(x, y);
-                val r = clamp(((c.getRed() * 255.0).toInt() + factor * threshold[0]).toInt(), 0, 255);
-                val g = clamp(((c.getGreen() * 255.0).toInt() + factor * threshold[1]).toInt(), 0, 255);
-                val b = clamp(((c.getBlue() * 255.0).toInt() + factor * threshold[2]).toInt(), 0, 255);
-                
-                val result = getPaletteColour(r, g, b);
-                pWriter.setColor(x, y, result);
+        for (y in 1 until h - 1) {
+            for (x in 1 until w - 1) {
+                val oldpixel = pReader.getColor(x, y);
+                val newpixel = getPaletteColour(oldpixel);
+                pWriter.setColor(x, y, newpixel);
+                val err: Color = Color.rgb(
+                    clamp(255.0f * (oldpixel.getRed().toFloat()   - newpixel.getRed().toFloat())  , 0.0f, 255.0f).toInt(),
+                    clamp(255.0f * (oldpixel.getGreen().toFloat() - newpixel.getGreen().toFloat()), 0.0f, 255.0f).toInt(),
+                    clamp(255.0f * (oldpixel.getBlue().toFloat()  - newpixel.getBlue().toFloat()) , 0.0f, 255.0f).toInt()
+                );
+                giveQuantErr(x + 1, y    , 7.0f / 16.0f, err, pWriter, pReader);
+                giveQuantErr(x - 1, y + 1, 3.0f / 16.0f, err, pWriter, pReader);
+                giveQuantErr(x    , y + 1, 5.0f / 16.0f, err, pWriter, pReader);
+                giveQuantErr(x + 1, y + 1, 1.0f / 16.0f, err, pWriter, pReader);
             }
         }
         ImageIO.write(SwingFXUtils.fromFXImage(img, null), "png", File(pathOutput));
     }
 
+    private fun giveQuantErr(x: Int, y: Int, z: Float, err: Color, pWriter: PixelWriter, pReader: PixelReader) {
+        val c = pReader.getColor(x, y);
+        val col = Color.rgb(
+            clamp(c.getRed().toFloat()   * 255.0f + (err.getRed().toFloat()   * 255.0f * z), 0.0f, 255.0f).toInt(),
+            clamp(c.getGreen().toFloat() * 255.0f + (err.getGreen().toFloat() * 255.0f * z), 0.0f, 255.0f).toInt(),
+            clamp(c.getBlue().toFloat()  * 255.0f + (err.getBlue().toFloat()  * 255.0f * z), 0.0f, 255.0f).toInt()
+        );
+        pWriter.setColor(x, y, col);
+    }
+
     var palette = arrayOf (
-         // Default RGB palette:
-        0x080000,0x201A0B,0x432817,0x492910,  
+        0x000000, 0xFFFFFF
+
+        // Default RGB palette:
+        /*0x080000,0x201A0B,0x432817,0x492910,  
         0x234309,0x5D4F1E,0x9C6B20,0xA9220F,
         0x2B347C,0x2B7409,0xD0CA40,0xE8A077,
-        0x6A94AB,0xD5C4B3,0xFCE76E,0xFCFAE2
+        0x6A94AB,0xD5C4B3,0xFCE76E,0xFCFAE2*/
 
         // Experimental greyscale palettE:
         /*0x000000, 0x111111, 0x222222, 0x333333,
@@ -99,13 +85,12 @@ class MainClass {
         0xcccccc, 0xdddddd, 0xeeeeee, 0xffffff*/
     );
 
-    private fun getPaletteColour(r0: Int, g0: Int, b0: Int) : Color {
+    private fun getPaletteColour(target: Color) : Color {
         var close = Color.rgb(
             (palette[0] shr 16) and 0xFF, 
             (palette[0] shr 8) and 0xFF, 
              palette[0] and 0xFF);
 
-        var target = Color.rgb(r0, g0, b0);
         for (i in palette) {
             val c = Color.rgb(
                 (i shr 16) and 0xFF, 
@@ -124,8 +109,14 @@ class MainClass {
         val diffB = ((a.getBlue() * 255.0) - (b.getBlue() * 255.0)).toInt();
         return diffR * diffR + diffG * diffG + diffB * diffB;
     }
-
+    /*
     private fun clamp(v: Int, min: Int, max: Int) : Int {
+        if (v < min) { return min; }
+        if (v > max) { return max; }
+        return v;
+    }
+    */
+    private fun clamp(v: Float, min: Float, max: Float) : Float {
         if (v < min) { return min; }
         if (v > max) { return max; }
         return v;
